@@ -1,0 +1,40 @@
+Handle puppet environments
+--------------------------
+
+Puppet has a long tradiation of handling environments in a strange way.
+
+Especially if you would like your server to be authorative over the environment, you still end up having problems,
+when switchting the environment.
+
+For example within the first run, you're client will still thing that it is still in the old environment and
+will try to fetch file sources with the old environment within the file url. This can lead up to either
+a couple of file not found issue or even uglier if file content is changed between runs and services depend
+on their correct content.
+
+You will find a lot more information in http://projects.puppetlabs.com/issues/3910
+
+Our current approach is quite simple:
+
+We use 2 puppet runs to switch the environment, this goes as followed:
+
+1. The dashboard is queried for the ENC data
+2. We detect the environment of the previous run by looking at the stored ENC data of previous runs
+3. If the newly set environment by the dashboard and the previous one match,
+   or we couldn't find any stored ENC data so far, we pass the retrieved ENC data unchanged
+   back to the puppetmaster.
+4. If the environments differ, we overwrite the included classes by just 'puppet::enforce_environment',
+   this is a simple class that does 2 things:
+
+   1. it sets the environment in the config to the new environment set by the ENC
+   2. it changes the runinterval to 1
+
+5. We store the passed ENC data, to retrieve it in later runs:
+
+The idea with these 2 changes is, that we need a single run to adjust the environment in the puppet config
+and by tweaking the runinterval, we ensure that the puppet client is calling back immediately after we adjusted
+the config file.
+
+This repository includes 2 things:
+
+* the tweaked external node script for the dashboard
+* an example puppet module that does exactly the 2 necessary things
