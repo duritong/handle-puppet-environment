@@ -12,27 +12,24 @@ require 'yaml'
 require 'uri'
 require 'net/http'
 
-def get_node_previous_environment(fqdn)
+def get_node_previous_environment(nodefile,fqdn)
   # Inspect the previously stored node file
-  nodefile = File.join('/var/lib/puppet/yaml/node_enc', "#{fqdn}.yaml")
   return nil unless File.exists?(nodefile)
   
-  YAML.load_file(nodefile).ivars['environment']
+  YAML.load_file(nodefile)['parameters']['environment']
 end
 
 def handle_env(content)
   parsed_content = YAML.load(content)
-  old_env = get_node_previous_environment(NODE)
+  nodefile = File.join('/var/lib/puppet/yaml/node_enc', "#{NODE}.yaml")
+  old_env = get_node_previous_environment(nodefile,NODE)
   
-  if old_env.nil? || parsed_content['environment'] == old_env
-    File.open(nodefile,'w'){|f| f << content } if old_env.nil?
-    content
-  else
+  if !old_env.nil? && parsed_content['parameters']['environment'] != old_env
     parsed_content['classes'] = [ 'puppet::enforce_environment' ]
-    result = YAML.dump(parsed_content)
-    File.open(nodefile,'w'){|f| f << result } 
-    result
+    content = YAML.dump(parsed_content)
   end
+  File.open(nodefile,'w'){|f| f << content }
+  content
 end
 
 DASHBOARD_URL = "http://localhost:3000"

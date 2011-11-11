@@ -1,5 +1,5 @@
 class puppet {
-  augeas{'run_interval':
+  augeas{'runinterval_and_environment':
     context => "/files/etc/puppet/puppet.conf/agent",
     changes => [
       "set environment ${environment}",
