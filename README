@@ -5,7 +5,7 @@ Puppet has a long tradition of struggling with its great feature of puppet envir
 requirements by various deployments it's not easy to get a solution that works properly for everyone and so the
 final-one-truth-solution is not yet available.
 
-If you would like your server to be authorative over the environment, you will find out, that in general it works
+If you would like your server to be authoritative over the environment, you will find out, that in general it works
 to set the environment in an ENC, however you still end up having problems, especially when you would like to 
 switch the environment.
 
@@ -25,10 +25,10 @@ You will find a lot more information about these issues in http://projects.puppe
 
 This repository presents a workaround to these issues, that is also quite simple. It uses an extended ENC script
 from the dashboard and expects 2 puppet classes to be part of your environment. So if you struggle with that
-problem, use the dashboard as your ENC and want it to be authorative regarding the environment, simply use the
+problem, use the dashboard as your ENC and want it to be authoritative regarding the environment, simply use the
 supplied script and include the provided classes into your modules and manifests.
 
-If you something else as your ENC, that would be authorative over your environments, you can apply the same idea to
+If you something else as your ENC, that would be authoritative over your environments, you can apply the same idea to
 your ENC script.
 
 The solution works, however there are a few edge-cases that are not supported and would require some more work
