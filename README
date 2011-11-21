@@ -1,40 +1,70 @@
 Handle puppet environments
 --------------------------
 
-Puppet has a long tradiation of handling environments in a strange way.
+Puppet has a long tradition of struggling with its great feature of puppet environments.  Due to all the different
+requirements by various deployments it's not easy to get a solution that works properly for everyone and so the
+final-one-truth-solution is not yet available.
 
-Especially if you would like your server to be authorative over the environment, you still end up having problems,
-when switchting the environment.
+If you would like your server to be authorative over the environment, you will find out, that in general it works
+to set the environment in an ENC, however you still end up having problems, especially when you would like to 
+switch the environment.
 
-For example within the first run, you're client will still thing that it is still in the old environment and
-will try to fetch file sources with the old environment within the file url. This can lead up to either
-a couple of file not found issue or even uglier if file content is changed between runs and services depend
-on their correct content.
+For example, within the first run after an environment change, you're client will still think that it is still in
+the old environment and will try to fetch file sources with the old environment within the file url. This can
+lead up to either a couple of file not found issue or even uglier if file content has changed between environments
+and services would depend on their correct content.
+The reason for this issue is that the catalog isn't served with an environment information in the source urls of file
+resources the client uses the environment from its config to generate the proper fully qualified source urls.
 
-You will find a lot more information in http://projects.puppetlabs.com/issues/3910
+Another issue is that the client, will not yet have downloaded all the puppet plugins from the new environment, and
+the catalog is actually queried with wrong facts and applied with wrong providers etc. This happens because puppet
+downloads all the plugins before it asks for the catalog, which it does before the server decides to switch the
+environment.
 
-Our current approach is quite simple:
+You will find a lot more information about these issues in http://projects.puppetlabs.com/issues/3910
 
-We use 2 puppet runs to switch the environment, this goes as followed:
+This repository presents a workaround to these issues, that is also quite simple. It uses an extended ENC script
+from the dashboard and expects 2 puppet classes to be part of your environment. So if you struggle with that
+problem, use the dashboard as your ENC and want it to be authorative regarding the environment, simply use the
+supplied script and include the provided classes into your modules and manifests.
+
+If you something else as your ENC, that would be authorative over your environments, you can apply the same idea to
+your ENC script.
+
+The solution works, however there are a few edge-cases that are not supported and would require some more work
+especially when validating if the client actually runs with the proper environment. For example currently the script
+won't realize if the environment change really succeeded in the second run and it's now safe to use the new environment.
+
+The idea goes as followed:
+
+We use 2 puppet runs to switch the environment:
 
 1. The dashboard is queried for the ENC data
 2. We detect the environment of the previous run by looking at the stored ENC data of previous runs
 3. If the newly set environment by the dashboard and the previous one match,
    or we couldn't find any stored ENC data so far, we pass the retrieved ENC data unchanged
    back to the puppetmaster.
-4. If the environments differ, we overwrite the included classes by just 'puppet::enforce_environment',
-   this is a simple class that does 2 things:
+4. If the environments has changed, we overwrite the included classes by just 'puppet::enforce_environment'.
+   This is a simple class that does 2 things:
 
    1. it sets the environment in the config to the new environment set by the ENC
    2. it changes the runinterval to 1
 
-5. We store the passed ENC data, to retrieve it in later runs:
+5. We store the passed ENC data in all cases, to retrieve it in later runs.
 
-The idea with these 2 changes is, that we need a single run to adjust the environment in the puppet config
-and by tweaking the runinterval, we ensure that the puppet client is calling back immediately after we adjusted
-the config file.
+The idea with these 2 runs is, that we need a single isolated run to adjust the environment in the puppet config
+on the client and by tweaking the runinterval, we ensure that the puppet client is calling back immediately after
+we adjusted the config file.
 
 This repository includes 2 things:
 
-* the tweaked external node script for the dashboard
+* the extended external node script for the dashboard
 * an example puppet module that does exactly the 2 necessary things
+
+The code provided here goes with the same license as the project (dashboard) from which biggest part got borrowed from:
+Apache License, Version 2.0
+
+Credits go to Oliver Hookins, for his Talk at Puppetcamp 2011 [1] that contained a similar approach and was an inspiration
+for that solution. Thanks!
+
+[1] http://paperairoplane.net/?p=208

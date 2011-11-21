@@ -21,13 +21,15 @@ end
 
 def handle_env(content)
   parsed_content = YAML.load(content)
-  nodefile = File.join('/var/lib/puppet/yaml/node_enc', "#{NODE}.yaml")
+  source_dir = '/var/lib/puppet/yaml/node_enc'
+  nodefile = File.join(source_dir, "#{NODE}.yaml")
   old_env = get_node_previous_environment(nodefile,NODE)
   
   if !old_env.nil? && parsed_content['parameters']['environment'] != old_env
     parsed_content['classes'] = [ 'puppet::enforce_environment' ]
     content = YAML.dump(parsed_content)
   end
+  Dir.mkdir(source_dir) unless File.directory?(source_dir)
   File.open(nodefile,'w'){|f| f << content }
   content
 end
